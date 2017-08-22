@@ -6,6 +6,9 @@ volatile byte *data_pointer;
 volatile uint8_t rcvCount = 0;
 volatile bool recvdflag;
 
+volatile uint16_t PM2_5Data = 0;
+volatile uint16_t PM10Data = 0;
+
 MSMG_HPMA115::MSMG_HPMA115(USARTSerial *ser)
 {
   hpmaSerial = NULL;
@@ -22,7 +25,6 @@ void MSMG_HPMA115::begin(uint32_t baud)
 
 void MSMG_HPMA115::readAutoData()
 {
-
   if(hpmaSerial->available())
   {
     byte c;
@@ -37,11 +39,23 @@ void MSMG_HPMA115::readAutoData()
 
     if(rcvCount >= dust_data_size)
     {
+      PM2_5Data = dust_data[6] * 256 + dust_data[7];
+      PM10Data = dust_data[8] * 256 + dust_data[9];
       rcvCount = 0;
       recvdflag = true;
     }
   }
 
+}
+
+uint16_t MSMG_HPMA115::getLastPM2_5Data() // 0 - 1000 ug/m^3
+{
+    return PM2_5Data;
+}
+
+uint16_t MSMG_HPMA115::getLastPM10Data()  // 0 - 1000 ug/m^3
+{
+  return PM10Data;
 }
 
 bool MSMG_HPMA115::dataReady()

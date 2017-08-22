@@ -178,6 +178,8 @@ void loop() {
   if(dust_sensor.dataReady())
   {
     Serial.write(dust_sensor.getData(),32);
+    Serial.println(dust_sensor.getLastPM2_5Data());
+    Serial.println(dust_sensor.getLastPM10Data());
   }
 
   ledControl();
@@ -188,7 +190,6 @@ void loop() {
     Particle.publish("Local IP",String(WiFi.localIP()));
     send_info_ok = false;
   }
-
 }
 
 void update() {

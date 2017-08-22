@@ -17,8 +17,6 @@
 #define HPMA115_ACK                   (0xA5A5)
 #define HPMA115_NACK                  (0x9696)
 
-
-
 class MSMG_HPMA115
 {
   public:
@@ -40,6 +38,9 @@ class MSMG_HPMA115
 
     void stopAutoSend();
     void enableAutoSend();
+
+    uint16_t getLastPM2_5Data(); // 0 - 1000 ug/m^3
+    uint16_t getLastPM10Data();  // 0 - 1000 ug/m^3
 
   private:
     byte calCheckSum();
