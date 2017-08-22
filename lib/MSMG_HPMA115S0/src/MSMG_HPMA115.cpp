@@ -31,7 +31,7 @@ void MSMG_HPMA115::readAutoData()
     {
         rcvCount = 0;
     }
-    
+
     dust_data[rcvCount] = c;
     rcvCount++;
 
@@ -43,18 +43,6 @@ void MSMG_HPMA115::readAutoData()
   }
 
 }
-
-// char MSMG_HPMA115::read()
-// {
-//
-//   char c = 0;
-//
-//   if(!hpmaSerial->available()) return c;
-//
-//   c = hpmaSerial->read();
-//
-//   return c;
-// }
 
 bool MSMG_HPMA115::dataReady()
 {

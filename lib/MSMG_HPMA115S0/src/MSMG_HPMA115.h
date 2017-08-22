@@ -29,7 +29,6 @@ class MSMG_HPMA115
     void stopMeasurement();
 
     void readAutoData();
-    //char read();
 
     bool dataReady();
 

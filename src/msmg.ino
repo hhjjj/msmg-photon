@@ -4,6 +4,7 @@
  * Author: Hojun Song
  * Date: 22nd Aug 2017
  */
+
 SYSTEM_THREAD(ENABLED)
 
 #include "msmg.h"
@@ -21,13 +22,6 @@ MSMG_HPMA115 dust_sensor(&Serial1);
 STARTUP(WiFi.selectAntenna(ANT_EXTERNAL));
 //STARTUP(WiFi.selectAntenna(ANT_INTERNAL));
 
-
-/**************************************************************************/
-/*
-    Displays some basic information on this sensor from the unified
-    sensor API sensor_t type (see Adafruit_Sensor for more information)
-*/
-/**************************************************************************/
 void displaySensorDetails(void)
 {
   sensor_t sensor;
@@ -44,11 +38,6 @@ void displaySensorDetails(void)
   delay(500);
 }
 
-/**************************************************************************/
-/*
-    Configures the gain and integration time for the TSL2591
-*/
-/**************************************************************************/
 void configureSensor(void)
 {
   // You can change the gain on the fly, to adapt to brighter/dimmer light situations
@@ -90,7 +79,6 @@ void configureSensor(void)
   Serial.println(F("------------------------------------"));
   Serial.println(F(""));
 }
-
 
 void setup() {
   pinMode(test_pin, INPUT);
@@ -139,12 +127,10 @@ void setup() {
   /* Configure the sensor */
   configureSensor();
 
-
   // run timer every update period
-  //Timer.begin(update, update_period * 2, hmSec, TIMER6);
+  // Timer.begin(update, update_period * 2, hmSec, TIMER6);
   tone(buzzer_pin, 4000,100);
 }
-
 
 void advancedRead(void)
 {
@@ -193,9 +179,6 @@ void loop() {
   {
     Serial.write(dust_sensor.getData(),32);
   }
-
-  // char c = dust_sensor.read();
-  // if(c) Serial.print(c);
 
   ledControl();
 
