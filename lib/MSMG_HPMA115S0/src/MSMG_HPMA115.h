@@ -27,10 +27,18 @@ class MSMG_HPMA115
     void begin(uint32_t baud);
     void startMeasurement();
     void stopMeasurement();
-    uint16_t readPM2_5();
-    uint16_t readPM10();
+
+    void readAutoData();
+    //char read();
+
+    bool dataReady();
+
+    byte *getData();
+
     void setAdjCoefficient(uint8_t val);
+
     uint8_t readAdjCoefficient();
+
     void stopAutoSend();
     void enableAutoSend();
 

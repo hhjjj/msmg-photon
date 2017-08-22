@@ -108,11 +108,14 @@ void setup() {
 
   dust_sensor.begin(9600);
 
-  Serial.begin(9600);
+  Serial.begin(115200);
   Serial.println(F("BME280 test"));
 
-
   dust_sensor.stopMeasurement();
+  delay(200);
+  dust_sensor.startMeasurement();
+  delay(100);
+  dust_sensor.enableAutoSend();
 
   // if (!bme.begin(0x76)) {
   if (!bme.begin()) {
@@ -161,28 +164,38 @@ void advancedRead(void)
 // loop() runs over and over again, as quickly as it can execute.
 void loop() {
 
-  Serial.print("Temperature = ");
-  Serial.print(bme.readTemperature());
-  Serial.println(" *C");
+  // Serial.print("Temperature = ");
+  // Serial.print(bme.readTemperature());
+  // Serial.println(" *C");
+  //
+  // Serial.print("Pressure = ");
+  //
+  // Serial.print(bme.readPressure() / 100.0F);
+  // Serial.println(" hPa");
+  //
+  // Serial.print("Approx. Altitude = ");
+  // Serial.print(bme.readAltitude(SEALEVELPRESSURE_HPA));
+  // Serial.println(" m");
+  //
+  // Serial.print("Humidity = ");
+  // Serial.print(bme.readHumidity());
+  // Serial.println(" %");
+  //
+  // Serial.println();
+  //
+  // advancedRead();
 
-  Serial.print("Pressure = ");
+  // delay(2000);
 
-  Serial.print(bme.readPressure() / 100.0F);
-  Serial.println(" hPa");
+  dust_sensor.readAutoData();
 
-  Serial.print("Approx. Altitude = ");
-  Serial.print(bme.readAltitude(SEALEVELPRESSURE_HPA));
-  Serial.println(" m");
+  if(dust_sensor.dataReady())
+  {
+    Serial.write(dust_sensor.getData(),32);
+  }
 
-  Serial.print("Humidity = ");
-  Serial.print(bme.readHumidity());
-  Serial.println(" %");
-
-  Serial.println();
-
-  advancedRead();
-
-  delay(2000);
+  // char c = dust_sensor.read();
+  // if(c) Serial.print(c);
 
   ledControl();
 
