@@ -4,83 +4,26 @@
  * Author: Hojun Song
  * Date: 22nd Aug 2017
  */
-
 SYSTEM_THREAD(ENABLED)
 
 #include "msmg.h"
-#include "SparkIntervalTimer.h"
 #include "Adafruit_Sensor.h"
 #include "Adafruit_BME280.h"
 #include "Adafruit_TSL2591.h"
 #include "MSMG_HPMA115.h"
 
-IntervalTimer Timer;
+STARTUP(WiFi.selectAntenna(ANT_EXTERNAL));
+//STARTUP(WiFi.selectAntenna(ANT_INTERNAL));
+
 Adafruit_BME280 bme; // I2C
 Adafruit_TSL2591 tsl = Adafruit_TSL2591(2591);
 MSMG_HPMA115 dust_sensor(&Serial1);
 
-STARTUP(WiFi.selectAntenna(ANT_EXTERNAL));
-//STARTUP(WiFi.selectAntenna(ANT_INTERNAL));
-
-void displaySensorDetails(void)
-{
-  sensor_t sensor;
-  tsl.getSensor(&sensor);
-  Serial.println(F("------------------------------------"));
-  Serial.print  (F("Sensor:       ")); Serial.println(sensor.name);
-  Serial.print  (F("Driver Ver:   ")); Serial.println(sensor.version);
-  Serial.print  (F("Unique ID:    ")); Serial.println(sensor.sensor_id);
-  Serial.print  (F("Max Value:    ")); Serial.print(sensor.max_value); Serial.println(F(" lux"));
-  Serial.print  (F("Min Value:    ")); Serial.print(sensor.min_value); Serial.println(F(" lux"));
-  Serial.print  (F("Resolution:   ")); Serial.print(sensor.resolution); Serial.println(F(" lux"));
-  Serial.println(F("------------------------------------"));
-  Serial.println(F(""));
-  delay(500);
-}
-
-void configureSensor(void)
-{
-  // You can change the gain on the fly, to adapt to brighter/dimmer light situations
-  //tsl.setGain(TSL2591_GAIN_LOW);    // 1x gain (bright light)
-  tsl.setGain(TSL2591_GAIN_MED);      // 25x gain
-  // tsl.setGain(TSL2591_GAIN_HIGH);   // 428x gain
-
-  // Changing the integration time gives you a longer time over which to sense light
-  // longer timelines are slower, but are good in very low light situtations!
-  tsl.setTiming(TSL2591_INTEGRATIONTIME_100MS);  // shortest integration time (bright light)
-  // tsl.setTiming(TSL2591_INTEGRATIONTIME_200MS);
-  // tsl.setTiming(TSL2591_INTEGRATIONTIME_300MS);
-  // tsl.setTiming(TSL2591_INTEGRATIONTIME_400MS);
-  // tsl.setTiming(TSL2591_INTEGRATIONTIME_500MS);
-  // tsl.setTiming(TSL2591_INTEGRATIONTIME_600MS);  // longest integration time (dim light)
-
-  /* Display the gain and integration time for reference sake */
-  Serial.println(F("------------------------------------"));
-  Serial.print  (F("Gain:         "));
-  tsl2591Gain_t gain = tsl.getGain();
-  switch(gain)
-  {
-    case TSL2591_GAIN_LOW:
-      Serial.println(F("1x (Low)"));
-      break;
-    case TSL2591_GAIN_MED:
-      Serial.println(F("25x (Medium)"));
-      break;
-    case TSL2591_GAIN_HIGH:
-      Serial.println(F("428x (High)"));
-      break;
-    case TSL2591_GAIN_MAX:
-      Serial.println(F("9876x (Max)"));
-      break;
-  }
-  Serial.print  (F("Timing:       "));
-  Serial.print((tsl.getTiming() + 1) * 100, DEC);
-  Serial.println(F(" ms"));
-  Serial.println(F("------------------------------------"));
-  Serial.println(F(""));
-}
+// every 1000 ms
+Timer timer(1000, timerCallback);
 
 void setup() {
+
   pinMode(test_pin, INPUT);
   attachInterrupt(test_pin, sendInfo, RISING);
 
@@ -92,136 +35,106 @@ void setup() {
   led_on = false;
 
   send_info_ok = false;
+  publish_data_ok = false;
+
+  // debug serial
+  Serial.begin(115200);
+
 
 
   dust_sensor.begin(9600);
 
-  Serial.begin(115200);
-  Serial.println(F("BME280 test"));
-
   dust_sensor.stopMeasurement();
-  delay(200);
+  delay(10);
   dust_sensor.startMeasurement();
-  delay(100);
+  delay(10);
   dust_sensor.enableAutoSend();
 
-  // if (!bme.begin(0x76)) {
-  if (!bme.begin()) {
-    Serial.println("Could not find a valid BME280 sensor, check wiring!");
-    while (1);
-  }
 
-  if (tsl.begin())
-  {
-    Serial.println(F("Found a TSL2591 sensor"));
-  }
-  else
-  {
-    Serial.println(F("No sensor found ... check your wiring?"));
-    while (1);
-  }
+  bme.begin();
 
-  /* Display some basic information on this sensor */
-  displaySensorDetails();
+  tsl.begin();
 
-  /* Configure the sensor */
-  configureSensor();
+  // TSL2591 Sensor Configure
+  tsl.setGain(TSL2591_GAIN_MED);      // 25x gain
+  tsl.setTiming(TSL2591_INTEGRATIONTIME_100MS);  // shortest integration time (bright light)
 
-  // run timer every update period
-  // Timer.begin(update, update_period * 2, hmSec, TIMER6);
+
   tone(buzzer_pin, 4000,100);
+  timer.start();
 }
 
-void advancedRead(void)
-{
-  // More advanced data read example. Read 32 bits with top 16 bits IR, bottom 16 bits full spectrum
-  // That way you can do whatever math and comparisons you want!
-  uint32_t lum = tsl.getFullLuminosity();
-  uint16_t ir, full;
-  ir = lum >> 16;
-  full = lum & 0xFFFF;
-  Serial.print(F("[ ")); Serial.print(millis()); Serial.print(F(" ms ] "));
-  Serial.print(F("IR: ")); Serial.print(ir);  Serial.print(F("  "));
-  Serial.print(F("Full: ")); Serial.print(full); Serial.print(F("  "));
-  Serial.print(F("Visible: ")); Serial.print(full - ir); Serial.print(F("  "));
-  Serial.print(F("Lux: ")); Serial.println(tsl.calculateLux(full, ir));
-}
-
-// loop() runs over and over again, as quickly as it can execute.
 void loop() {
-
-  // Serial.print("Temperature = ");
-  // Serial.print(bme.readTemperature());
-  // Serial.println(" *C");
-  //
-  // Serial.print("Pressure = ");
-  //
-  // Serial.print(bme.readPressure() / 100.0F);
-  // Serial.println(" hPa");
-  //
-  // Serial.print("Approx. Altitude = ");
-  // Serial.print(bme.readAltitude(SEALEVELPRESSURE_HPA));
-  // Serial.println(" m");
-  //
-  // Serial.print("Humidity = ");
-  // Serial.print(bme.readHumidity());
-  // Serial.println(" %");
-  //
-  // Serial.println();
-  //
-  // advancedRead();
-
-  // delay(2000);
 
   dust_sensor.readAutoData();
 
   if(dust_sensor.dataReady())
   {
-    Serial.write(dust_sensor.getData(),32);
-    Serial.println(dust_sensor.getLastPM2_5Data());
-    Serial.println(dust_sensor.getLastPM10Data());
+    dust_sensor.getData();
+    //Serial.write(dust_sensor.getData(),32);
   }
 
-  ledControl();
+
+  if(led_ok)
+  {
+
+    led_ok = false;
+  }
 
   if(send_info_ok)
   {
-    Particle.publish("RSSI",String(WiFi.RSSI()));
-    Particle.publish("Local IP",String(WiFi.localIP()));
+    Particle.publish("mangwon", "RSSI: " + String(WiFi.RSSI()), PRIVATE);
+    Particle.publish("mangwon", "Local IP: " + String(WiFi.localIP()), PRIVATE);
     send_info_ok = false;
+  }
+
+  if(publish_data_ok)
+  {
+    uint32_t lum = tsl.getFullLuminosity();
+    uint16_t ir, full;
+    ir = lum >> 16;
+    full = lum & 0xFFFF;
+
+    String pm2_5Str = String(dust_sensor.getLastPM2_5Data());
+    String pm10Str = String(dust_sensor.getLastPM10Data());
+    String tempStr = String(bme.readTemperature()); // C
+    String pressureStr = String(bme.readPressure() / 100.0F); // hPa
+    String humidStr = String(bme.readHumidity()); // %
+    String luxStr = String(tsl.calculateLux(full, ir)); // lux
+
+    String allDataStr ="";
+    allDataStr = "PM2.5: " + pm2_5Str + "," + "PM10: " + pm10Str + "," + "TEMP: " + tempStr + "," + "PRESS: " + pressureStr +"," + "HUMID: " + humidStr +","+ "LUX: " + luxStr;
+
+    Particle.publish("mangwon", allDataStr, PRIVATE);
+
+    publish_data_ok = false;
   }
 }
 
-void update() {
-  led_ok = true;
+void timerCallback() {
+  publish_data_ok = true;
 }
 
 void ledControl()
 {
+  if(led_on == false)
+    led_on = true;
+  else
+    led_on = false;
 
-  if(led_ok)
+
+  if(led_on)
   {
-    if(led_on == false)
-      led_on = true;
-    else
-      led_on = false;
-
-
-    if(led_on)
-    {
-      digitalWrite(red_led_pin, HIGH);
-      digitalWrite(green_led_pin, HIGH);
-      digitalWrite(blue_led_pin, HIGH);
-      tone(buzzer_pin, 4000,100);
-    }
-    else
-    {
-      digitalWrite(red_led_pin, LOW);
-      digitalWrite(green_led_pin, LOW);
-      digitalWrite(blue_led_pin, LOW);
-    }
-
-    led_ok = false;
+    digitalWrite(red_led_pin, HIGH);
+    digitalWrite(green_led_pin, HIGH);
+    digitalWrite(blue_led_pin, HIGH);
+    tone(buzzer_pin, 4000,100);
+  }
+  else
+  {
+    digitalWrite(red_led_pin, LOW);
+    digitalWrite(green_led_pin, LOW);
+    digitalWrite(blue_led_pin, LOW);
   }
 }
 

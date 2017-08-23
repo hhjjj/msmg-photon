@@ -13,11 +13,11 @@ const uint8_t blue_led_pin = D5;
 volatile bool led_ok;
 volatile bool led_on;
 
+volatile bool publish_data_ok;
+
 volatile bool send_info_ok;
 
 
-const int update_period = 500; // 500 ms
-
-void update();
+void timerCallback();
 void ledControl();
 void sendInfo();
