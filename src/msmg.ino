@@ -96,14 +96,16 @@ void loop() {
     full = lum & 0xFFFF;
 
     String pm2_5Str = String(dust_sensor.getLastPM2_5Data());
-    String pm10Str = String(dust_sensor.getLastPM10Data());
+    //String pm10Str = String(dust_sensor.getLastPM10Data());
     String tempStr = String(bme.readTemperature()); // C
     String pressureStr = String(bme.readPressure() / 100.0F); // hPa
     String humidStr = String(bme.readHumidity()); // %
     String luxStr = String(tsl.calculateLux(full, ir)); // lux
 
     String allDataStr ="";
-    allDataStr = "PM2.5: " + pm2_5Str + "," + "PM10: " + pm10Str + "," + "TEMP: " + tempStr + "," + "PRESS: " + pressureStr +"," + "HUMID: " + humidStr +","+ "LUX: " + luxStr;
+    //allDataStr = "PM2.5: " + pm2_5Str + "," + "PM10: " + pm10Str + "," + "TEMP: " + tempStr + "," + "PRESS: " + pressureStr +"," + "HUMID: " + humidStr +","+ "LUX: " + luxStr;
+    allDataStr = "PM2.5: " + pm2_5Str + "," + "TEMP: " + tempStr + "," + "PRESS: " + pressureStr +"," + "HUMID: " + humidStr +","+ "LUX: " + luxStr;
+
 
     Particle.publish("mangwon", allDataStr, PRIVATE);
 
